@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { MapFilters } from './types';
+import { MapFilters, Industry } from './types';
 import { cn } from '@/lib/utils';
 
 interface FilterPanelProps {
@@ -10,6 +10,8 @@ interface FilterPanelProps {
   loading?: boolean;
   className?: string;
   onClose?: () => void;
+  industries?: Industry[];
+  industriesLoading?: boolean;
 }
 
 export const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -18,6 +20,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   loading = false,
   className,
   onClose,
+  industries = [],
+  industriesLoading = false,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [zipCodeInput, setZipCodeInput] = useState(
@@ -26,6 +30,12 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const handleTimeframeChange = useCallback((timeframe: '7_days' | '30_days') => {
     onFiltersChange({ timeframe });
+  }, [onFiltersChange]);
+
+  const handleIndustryChange = useCallback((industryId: number) => {
+    if (industryId > 0) {
+      onFiltersChange({ industryId });
+    }
   }, [onFiltersChange]);
 
   const handleZipCodeSubmit = useCallback(() => {
@@ -64,6 +74,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             {(filters.zipCodes && filters.zipCodes.length > 0) && (
               <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
                 {filters.zipCodes.length} ZIP{filters.zipCodes.length !== 1 ? 's' : ''}
+              </span>
+            )}
+            {industries.length > 0 && (
+              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                {industries.find(ind => ind.campaign_id === filters.industryId)?.campaign_name || 'Industry'}
               </span>
             )}
           </div>
@@ -133,6 +148,39 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 30 Days
               </button>
             </div>
+          </div>
+
+          {/* Industry Filter */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+              Industry
+            </label>
+            <select
+              value={filters.industryId || ''}
+              onChange={(e) => handleIndustryChange(Number(e.target.value))}
+              disabled={loading || industriesLoading}
+              className={cn(
+                "w-full px-2 sm:px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md",
+                "focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent",
+                "disabled:bg-gray-50 disabled:text-gray-500",
+                (loading || industriesLoading) && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {industriesLoading ? (
+                <option value="">Loading industries...</option>
+              ) : industries.length === 0 ? (
+                <option value="">No industries available</option>
+              ) : (
+                <>
+                  <option value="">Select an industry</option>
+                  {industries.map((industry) => (
+                    <option key={industry.campaign_id} value={industry.campaign_id}>
+                      {industry.campaign_name}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
           </div>
 
           {/* ZIP Code Filter */}

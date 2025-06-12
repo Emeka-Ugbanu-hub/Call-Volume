@@ -50,6 +50,14 @@ export interface MapTooltipData extends MapDataPoint {
   position: { x: number; y: number };
 }
 
+// Industry/Campaign types
+export interface Industry {
+  campaign_id: number;
+  campaign_name: string;
+}
+
+export type IndustriesResponse = Industry[];
+
 // County selection types
 export interface CountyData {
   countyName: string;

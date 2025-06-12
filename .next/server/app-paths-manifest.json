@@ -1,4 +1,7 @@
 {
+  "/dashboard/page": "app/dashboard/page.js",
+  "/api/map-data/route": "app/api/map-data/route.js",
   "/api/county-boundary/route": "app/api/county-boundary/route.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/page": "app/page.js",
+  "/api/industries/route": "app/api/industries/route.js"
 }

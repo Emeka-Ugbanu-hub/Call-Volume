@@ -9,6 +9,7 @@ import CountyStatsPanel from './CountyStatsPanel';
 import { useMapData } from '@/hooks/useMapData';
 import { useFilters } from '@/hooks/useFilters';
 import { useCountySelection } from '@/hooks/useCountySelection';
+import { useIndustries } from '@/hooks/useIndustries';
 import { addCoordinatesToData, calculateMapBounds, aggregateDataByCounty } from '@/lib/geocoding';
 import { createClusterData } from '@/lib/clustering';
 import { countyBoundaryToGeoJSON } from '@/lib/nominatim';
@@ -72,6 +73,9 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
   // County selection state (only when enabled)
   const countySelection = useCountySelection();
 
+  // Industries data
+  const { industries, loading: industriesLoading, error: industriesError } = useIndustries();
+
   // Data fetching
   const { data: rawData, loading, error: apiError, refetch } = useMapData(filters);
 
@@ -123,6 +127,14 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
       onError?.(apiError);
     }
   }, [apiError, onError]);
+
+  // Handle industries error
+  useEffect(() => {
+    if (industriesError) {
+      console.warn('Industries loading failed:', industriesError.message);
+      // Don't set main error for industries failure, just log it
+    }
+  }, [industriesError]);
 
   // Filter valid data points (with coordinates)
   const validDataPoints = processedData.filter(
@@ -772,6 +784,8 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
             onFiltersChange={updateFilters}
             loading={loading}
             onClose={() => setShowFilterPanel(false)}
+            industries={industries}
+            industriesLoading={industriesLoading}
           />
         </div>
       )}

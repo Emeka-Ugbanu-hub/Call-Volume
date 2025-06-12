@@ -1,4 +1,4 @@
-import { MapDataResponse, MapFilters } from '@/components/LeadsMap/types';
+import { MapDataResponse, MapFilters, IndustriesResponse } from '@/components/LeadsMap/types';
 
 // Use Next.js API route as proxy to avoid CORS issues
 const API_BASE_URL = '/api'; // Local Next.js API routes
@@ -120,4 +120,45 @@ export async function fetchMapDataWithCache(filters: MapFilters): Promise<MapDat
   apiCache.set(filters, data);
   
   return data;
+}
+
+export async function fetchIndustries(): Promise<IndustriesResponse> {
+  const url = new URL(`${API_BASE_URL}/industries`, window.location.origin);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(
+        `Industries API request failed: ${response.status} ${response.statusText}`,
+        response.status,
+        errorData
+      );
+    }
+
+    const data = await response.json();
+    
+    // Validate response structure
+    if (!Array.isArray(data)) {
+      throw new ApiError('Invalid industries response format: expected array');
+    }
+
+    return data as IndustriesResponse;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new ApiError('Network error: Unable to connect to Industries API');
+    }
+    
+    throw new ApiError('Unknown error occurred while fetching industries', undefined, error);
+  }
 }

@@ -5,7 +5,6 @@ import { useState } from 'react';
 
 export default function DashboardPage() {
   const [selectedZipCode, setSelectedZipCode] = useState<string | null>(null);
-  const [countySelectionEnabled, setCountySelectionEnabled] = useState(false);
 
   const handleZipCodeClick = (data: any) => {
     setSelectedZipCode(data.zipCode);
@@ -70,28 +69,6 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 flex-shrink-0">
-              {/* County Selection Toggle */}
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={countySelectionEnabled}
-                  onChange={(e) => setCountySelectionEnabled(e.target.checked)}
-                  className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                />
-                <span className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">
-                  Enable County Selection
-                </span>
-              </label>
-              
-              {/* Mobile instruction for county selection */}
-              {countySelectionEnabled && (
-                <div className="sm:hidden bg-green-50 border border-green-200 rounded-lg px-2 py-1">
-                  <p className="text-xs text-green-700">
-                    💡 Tap county names to select/deselect them
-                  </p>
-                </div>
-              )}
-              
               {selectedZipCode && (
                 <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2">
                   <p className="text-xs sm:text-sm text-green-800">
@@ -117,7 +94,6 @@ export default function DashboardPage() {
               showLegend={true}
               enableClustering={true}
               heatmapIntensity={1}
-              enableCountySelection={countySelectionEnabled}
               onZipCodeClick={handleZipCodeClick}
               onDataLoad={handleDataLoad}
               onError={handleError}

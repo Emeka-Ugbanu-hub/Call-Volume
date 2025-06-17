@@ -87,7 +87,6 @@ export interface CountySelectionState {
 
 // Extended props for county selection
 export interface LeadsMapPropsWithCounties extends LeadsMapProps {
-  enableCountySelection?: boolean;
   onCountySelect?: (counties: CountyData[]) => void;
   onCountyHover?: (county: CountyData | null) => void;
 }

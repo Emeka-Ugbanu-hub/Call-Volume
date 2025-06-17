@@ -1,10 +1,9 @@
-// Nominatim (OpenStreetMap) API integration for county boundaries
 export interface NominatimCountyResponse {
   place_id: number;
   licence: string;
   osm_type: string;
   osm_id: number;
-  boundingbox: [string, string, string, string]; // [lat_min, lat_max, lon_min, lon_max]
+  boundingbox: [string, string, string, string]; 
   lat: string;
   lon: string;
   display_name: string;
@@ -13,14 +12,14 @@ export interface NominatimCountyResponse {
   importance: number;
   geojson?: {
     type: string;
-    coordinates: number[][][] | number[][][][]; // Polygon or MultiPolygon
+    coordinates: number[][][] | number[][][][]; 
   };
 }
 
 export interface CountyBoundary {
   name: string;
   state: string;
-  center: [number, number]; // [longitude, latitude]
+  center: [number, number]; 
   bounds: {
     southwest: [number, number];
     northeast: [number, number];
@@ -31,28 +30,26 @@ export interface CountyBoundary {
   };
 }
 
-// Cache for county boundaries to avoid repeated API calls
+
 const COUNTY_BOUNDARY_CACHE: Record<string, CountyBoundary> = {};
 
-/**
- * Fetch county boundary from Nominatim API
- */
+
 export async function fetchCountyBoundary(
   countyName: string, 
   stateName: string
 ): Promise<CountyBoundary | null> {
   const cacheKey = `${countyName}, ${stateName}`;
   
-  // Check cache first
+
   if (COUNTY_BOUNDARY_CACHE[cacheKey]) {
     return COUNTY_BOUNDARY_CACHE[cacheKey];
   }
 
   try {
-    // Clean county name (remove "County" suffix if present)
+   
     const cleanCountyName = countyName.replace(/\s+County$/i, '');
     
-    // Use our proxy API endpoint to avoid CORS issues
+   
     const searchUrl = `/api/county-boundary?` + 
       `county=${encodeURIComponent(cleanCountyName)}&` +
       `state=${encodeURIComponent(stateName)}`;
@@ -83,7 +80,7 @@ export async function fetchCountyBoundary(
       return null;
     }
 
-    // Parse bounding box
+   
     const [latMin, latMax, lonMin, lonMax] = result.boundingbox.map(Number);
     
     const boundary: CountyBoundary = {
@@ -100,7 +97,7 @@ export async function fetchCountyBoundary(
       }
     };
 
-    // Cache the result
+   
     COUNTY_BOUNDARY_CACHE[cacheKey] = boundary;
     
     return boundary;
@@ -110,9 +107,7 @@ export async function fetchCountyBoundary(
   }
 }
 
-/**
- * Convert county boundary to GeoJSON feature for map rendering
- */
+
 export function countyBoundaryToGeoJSON(boundary: CountyBoundary): GeoJSON.Feature {
   return {
     type: 'Feature',
@@ -125,9 +120,7 @@ export function countyBoundaryToGeoJSON(boundary: CountyBoundary): GeoJSON.Featu
   };
 }
 
-/**
- * Get multiple county boundaries
- */
+
 export async function fetchMultipleCountyBoundaries(
   counties: Array<{ name: string; state: string }>
 ): Promise<CountyBoundary[]> {
@@ -139,9 +132,7 @@ export async function fetchMultipleCountyBoundaries(
   return results.filter((boundary): boundary is CountyBoundary => boundary !== null);
 }
 
-/**
- * Check if a point is within county bounds (rough check using bounding box)
- */
+
 export function isPointInCountyBounds(
   point: [number, number], 
   boundary: CountyBoundary

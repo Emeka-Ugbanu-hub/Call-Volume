@@ -1,9 +1,5 @@
 import type { MapDataPoint, ClusterPoint } from '@/components/LeadsMap/types';
 
-/**
- * Simple clustering algorithm that groups nearby ZIP codes
- * This is a basic implementation for demo purposes
- */
 export function createClusterData(
   dataPoints: MapDataPoint[],
   zoom: number = 5
@@ -12,7 +8,7 @@ export function createClusterData(
     return [];
   }
 
-  // At high zoom levels, don't cluster
+
   if (zoom > 8) {
     return dataPoints.map(point => ({
       ...point,
@@ -37,7 +33,7 @@ export function createClusterData(
       coordinates: point.coordinates
     };
 
-    // Find nearby points to cluster
+
     const clusterRadius = getClusterRadius(zoom);
     
     for (const otherPoint of dataPoints) {
@@ -52,7 +48,7 @@ export function createClusterData(
         );
 
         if (distance < clusterRadius) {
-          // Merge the points
+
           cluster.totalRequests += otherPoint.totalRequests;
           cluster.totalConversions += otherPoint.totalConversions;
           cluster.totalCallsConnected += otherPoint.totalCallsConnected;
@@ -61,7 +57,7 @@ export function createClusterData(
           cluster.maxBid = Math.max(cluster.maxBid, otherPoint.maxBid);
           cluster.clusterSize++;
           
-          // Update cluster center (simple average)
+   
           cluster.coordinates = [
             (cluster.coordinates[0] + otherPoint.coordinates[0]) / 2,
             (cluster.coordinates[1] + otherPoint.coordinates[1]) / 2
@@ -79,18 +75,12 @@ export function createClusterData(
   return clusters;
 }
 
-/**
- * Calculate the clustering radius based on zoom level
- */
 function getClusterRadius(zoom: number): number {
-  // Smaller radius at higher zoom levels
+
   return Math.max(0.1, 2 / Math.pow(2, zoom));
 }
 
-/**
- * Calculate distance between two coordinate points
- * Simple Euclidean distance for demo purposes
- */
+
 function calculateDistance(
   coord1: [number, number],
   coord2: [number, number]
@@ -100,18 +90,14 @@ function calculateDistance(
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-/**
- * Get color based on bid amount for visualization
- */
+
 export function getBidColor(avgBid: number): string {
-  if (avgBid < 50) return '#10B981'; // green for low bids
-  if (avgBid < 75) return '#F59E0B'; // amber for medium bids
-  return '#EF4444'; // red for high bids
+  if (avgBid < 50) return '#10B981'; 
+  if (avgBid < 75) return '#F59E0B'; 
+  return '#EF4444'; 
 }
 
-/**
- * Get marker size based on total requests
- */
+
 export function getMarkerSize(totalRequests: number): number {
   return Math.max(8, Math.min(40, Math.log(totalRequests + 1) * 5));
 }

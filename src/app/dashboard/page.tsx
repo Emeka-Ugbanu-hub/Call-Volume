@@ -8,11 +8,9 @@ export default function DashboardPage() {
 
   const handleZipCodeClick = (data: any) => {
     setSelectedZipCode(data.zipCode);
-    console.log('ZIP Code clicked:', data);
   };
 
   const handleDataLoad = (data: any[]) => {
-    console.log('Map data loaded:', data.length, 'data points');
   };
 
   const handleError = (error: Error) => {
@@ -20,14 +18,12 @@ export default function DashboardPage() {
   };
 
   const handleCountySelect = (counties: any[]) => {
-    console.log('Counties selected:', counties);
   };
 
   const handleCountyHover = (county: any) => {
-    console.log('County hovered:', county);
   };
 
-  // Get Mapbox token from environment variables
+
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   if (!mapboxToken) {
@@ -86,7 +82,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] min-h-[400px] sm:min-h-[600px]">
             <LeadsMap
-              industryId={123} // Example industry ID
+              industryId={123} 
               timeframe="30_days"
               mapboxAccessToken={mapboxToken}
               className="w-full h-full"

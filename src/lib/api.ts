@@ -1,8 +1,8 @@
 import { MapDataResponse, MapFilters, IndustriesResponse } from '@/components/LeadsMap/types';
 
-// Use Next.js API route as proxy to avoid CORS issues
-const API_BASE_URL = '/api'; // Local Next.js API routes
-const API_VERSION = ''; // Not needed for local routes
+
+const API_BASE_URL = '/api'; 
+const API_VERSION = ''; 
 
 class ApiError extends Error {
   constructor(
@@ -18,7 +18,7 @@ class ApiError extends Error {
 export async function fetchMapData(filters: MapFilters): Promise<MapDataResponse> {
   const url = new URL(`${API_BASE_URL}/map-data`, window.location.origin);
   
-  // Add query parameters
+
   url.searchParams.set('industryId', filters.industryId.toString());
   url.searchParams.set('timeframe', filters.timeframe);
   
@@ -27,7 +27,7 @@ export async function fetchMapData(filters: MapFilters): Promise<MapDataResponse
   }
 
   try {
-    // Simple headers for local API route - authentication handled by proxy
+    
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
@@ -46,7 +46,7 @@ export async function fetchMapData(filters: MapFilters): Promise<MapDataResponse
 
     const data = await response.json();
     
-    // Validate response structure
+   
     if (!Array.isArray(data)) {
       throw new ApiError('Invalid response format: expected array');
     }
@@ -65,7 +65,7 @@ export async function fetchMapData(filters: MapFilters): Promise<MapDataResponse
   }
 }
 
-// Cache implementation for API responses
+
 class ApiCache {
   private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
   
@@ -75,7 +75,7 @@ class ApiCache {
   
   set(filters: MapFilters, data: any, ttlMinutes = 5): void {
     const key = this.generateKey(filters);
-    const ttl = ttlMinutes * 60 * 1000; // Convert to milliseconds
+    const ttl = ttlMinutes * 60 * 1000; 
     
     this.cache.set(key, {
       data,
@@ -107,16 +107,16 @@ class ApiCache {
 export const apiCache = new ApiCache();
 
 export async function fetchMapDataWithCache(filters: MapFilters): Promise<MapDataResponse> {
-  // Check cache first
+
   const cached = apiCache.get(filters);
   if (cached) {
     return cached;
   }
   
-  // Fetch fresh data
+
   const data = await fetchMapData(filters);
   
-  // Cache the result
+
   apiCache.set(filters, data);
   
   return data;
@@ -144,7 +144,7 @@ export async function fetchIndustries(): Promise<IndustriesResponse> {
 
     const data = await response.json();
     
-    // Validate response structure
+  
     if (!Array.isArray(data)) {
       throw new ApiError('Invalid industries response format: expected array');
     }

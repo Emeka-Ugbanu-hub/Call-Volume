@@ -5,19 +5,17 @@ const API_SECRET_KEY = 'VoarWqi3dh6tslo9ClU5WNjT4lAHJIAL';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🏭 Fetching industries from external API...');
 
-    // Prepare headers for the external API request
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
-    // Add API key for authentication
+
     if (API_SECRET_KEY) {
       headers['Authorization'] = `Bearer ${API_SECRET_KEY}`;
     }
 
-    // Make request to external API
+   
     const response = await fetch(`${EXTERNAL_API_BASE}/v1/industries`, {
       method: 'GET',
       headers,
@@ -32,7 +30,6 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('✅ Industries fetched successfully');
 
     return NextResponse.json(data);
   } catch (error) {

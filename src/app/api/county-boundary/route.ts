@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build the proper query string for a county search
+
     const countyQuery = `${county} County, ${state}`;
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?` +
       `q=${encodeURIComponent(countyQuery)}&` +
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     
     const response = await fetch(nominatimUrl, {
       headers: {
-        'User-Agent': 'LeadsMap/1.0 (contact@example.com)', // Required by Nominatim
+        'User-Agent': 'LeadsMap/1.0 (contact@example.com)', 
       },
     });
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    // Return the full Nominatim response array to match the expected format
+ 
     return NextResponse.json(data);
 
   } catch (error) {

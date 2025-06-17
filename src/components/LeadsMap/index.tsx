@@ -25,7 +25,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
   className,
   mapboxAccessToken,
   initialZoom = 4,
-  initialCenter = [-95.7129, 37.0902], // Center of US
+  initialCenter = [-95.7129, 37.0902],
   mapStyle = 'mapbox://styles/mapbox/light-v11',
   showFilters = true,
   showLegend = true,
@@ -52,7 +52,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // DMA state management for zoom and interaction
+
   const [selectedDMA, setSelectedDMA] = useState<DMAData | null>(null);
   const [hoveredDMA, setHoveredDMA] = useState<string | null>(null);
   const [isZoomedToDMA, setIsZoomedToDMA] = useState(false);
@@ -60,7 +60,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
   const [showCountiesInDMA, setShowCountiesInDMA] = useState(false);
   const [selectedCountiesInDMA, setSelectedCountiesInDMA] = useState<CountyData[]>([]);
 
-  // Detect mobile view
+
   useEffect(() => {
     const checkMobileView = () => {
       setIsMobileView(window.innerWidth < 640);
@@ -71,27 +71,27 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     return () => window.removeEventListener('resize', checkMobileView);
   }, []);
 
-  // Filter state management
+
   const { filters, updateFilters } = useFilters({
     industryId,
     timeframe,
     zipCodes,
   });
 
-  // County selection state (only when enabled)
+
   const countySelection = useCountySelection();
 
-  // Industries data
+
   const { industries, loading: industriesLoading, error: industriesError } = useIndustries();
 
-  // Data fetching
+
   const { data: rawData, loading, error: apiError, refetch } = useMapData(filters);
 
-  // Process data with coordinates
+
   const [processedData, setProcessedData] = useState<Array<MapDataPoint & { coordinates: [number, number] | null }>>([]);
   const [countyData, setCountyData] = useState<CountyData[]>([]);
 
-  // Process raw data with geocoding
+
   useEffect(() => {
     if (!rawData) return;
 
@@ -101,13 +101,13 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
         const dataWithCoords = await addCoordinatesToData(rawData, mapboxAccessToken);
         setProcessedData(dataWithCoords);
         
-        // Always generate county data for DMA functionality
+
         const aggregatedCountyData = await aggregateDataByCounty(dataWithCoords, mapboxAccessToken);
         setCountyData(aggregatedCountyData);
         
         onDataLoad?.(rawData);
         
-        // Auto-fit map to data bounds
+
         const bounds = calculateMapBounds(dataWithCoords);
         if (bounds && mapRef.current) {
           mapRef.current.fitBounds(
@@ -116,7 +116,6 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           );
         }
       } catch (err) {
-        console.error('Error processing map data:', err);
         setError('Failed to process map data');
       } finally {
         setIsLoading(false);
@@ -126,7 +125,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     processData();
   }, [rawData, mapboxAccessToken, onDataLoad]);
 
-  // Handle API errors
+
   useEffect(() => {
     if (apiError) {
       setError(apiError.message);
@@ -134,39 +133,33 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     }
   }, [apiError, onError]);
 
-  // Handle industries error
+
   useEffect(() => {
     if (industriesError) {
-      console.warn('Industries loading failed:', industriesError.message);
-      // Don't set main error for industries failure, just log it
     }
   }, [industriesError]);
 
-  // Filter valid data points (with coordinates)
+
   const validDataPoints = processedData.filter(
     (point): point is MapDataPoint & { coordinates: [number, number] } => 
       point.coordinates !== null
   );
 
-  // Create cluster data for heatmap
+
   const clusterData = enableClustering ? createClusterData(validDataPoints) : null;
 
-  // DMA data processing with selection and hover states
+
   const dmaData = useMemo(() => {
     try {
       const geojson = getDMAGeoJSON();
       
       if (!geojson.features || geojson.features.length === 0) {
-        console.warn('No DMA features found in processed data');
         return {
           type: 'FeatureCollection' as const,
           features: []
         };
       }
       
-      console.log(`✅ Loaded ${geojson.features.length} DMA regions for map display`);
-      
-      // Add selection and hover states to each DMA feature
       const featuresWithState = geojson.features.map(feature => ({
         ...feature,
         properties: {
@@ -181,7 +174,6 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
         features: featuresWithState
       };
     } catch (error) {
-      console.error('❌ Error processing DMA data:', error);
       return {
         type: 'FeatureCollection' as const,
         features: []
@@ -189,7 +181,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     }
   }, [selectedDMA, hoveredDMA]);
 
-  // Create heatmap source data
+
   const heatmapSourceData = {
     type: 'FeatureCollection' as const,
     features: validDataPoints.map(point => ({
@@ -205,7 +197,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     })),
   };
 
-  // Heatmap layer configuration
+
   const heatmapLayer = {
     id: 'heatmap',
     type: 'heatmap' as const,
@@ -228,12 +220,12 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
         'interpolate',
         ['linear'],
         ['heatmap-density'],
-        0, 'rgba(16, 185, 129, 0)', // transparent green
-        0.2, 'rgba(16, 185, 129, 0.6)', // green-500
-        0.4, 'rgba(34, 197, 94, 0.6)', // green-500
-        0.6, 'rgba(234, 179, 8, 0.8)', // yellow-500
-        0.8, 'rgba(239, 68, 68, 0.8)', // red-500
-        1, 'rgba(220, 38, 38, 1)', // red-600
+        0, 'rgba(16, 185, 129, 0)',
+        0.2, 'rgba(16, 185, 129, 0.6)', 
+        0.4, 'rgba(34, 197, 94, 0.6)', 
+        0.6, 'rgba(234, 179, 8, 0.8)', 
+        0.8, 'rgba(239, 68, 68, 0.8)', 
+        1, 'rgba(220, 38, 38, 1)', 
       ] as any,
       'heatmap-radius': [
         'interpolate',
@@ -253,7 +245,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     },
   };
 
-  // County boundary layer configuration - for all counties in DMA
+
   const allCountyBoundaryLayer = {
     id: 'all-county-boundaries',
     type: 'line' as const,
@@ -262,22 +254,22 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
       'line-join': 'round' as const,
     },
     paint: {
-      'line-color': '#10B981', // Green border for all counties
+      'line-color': '#10B981', 
       'line-width': isMobileView ? 2 : 1.5,
       'line-opacity': 0.7,
     },
   };
 
-  // County boundary layer configuration - only for selected counties (filled)
+
   const countyBoundaryLayer = {
     id: 'county-boundaries',
     type: 'fill' as const,
     layout: {},
     paint: {
       'fill-color': isMobileView 
-        ? 'rgba(16, 185, 129, 0.4)' // More visible on mobile
-        : 'rgba(16, 185, 129, 0.3)', // green with transparency
-      'fill-outline-color': '#10B981', // green border
+        ? 'rgba(16, 185, 129, 0.4)' 
+        : 'rgba(16, 185, 129, 0.3)', 
+      'fill-outline-color': '#10B981', 
     },
   };
 
@@ -290,23 +282,22 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     },
     paint: {
       'line-color': '#10B981',
-      'line-width': isMobileView ? 3 : 2, // Thicker line on mobile
-      'line-opacity': 1, // Fully opaque for selected counties
+      'line-width': isMobileView ? 3 : 2,  
+      'line-opacity': 1, 
     },
   };
 
-  // Clickable county fill layer - transparent but clickable areas for all counties
   const countyClickableAreaLayer = {
     id: 'county-clickable-areas',
     type: 'fill' as const,
     layout: {},
     paint: {
-      'fill-color': 'rgba(0, 0, 0, 0)', // Completely transparent
-      'fill-opacity': 0, // Invisible but still clickable
+      'fill-color': 'rgba(0, 0, 0, 0)',
+      'fill-opacity': 0, 
     },
   };
 
-  // County label layers using native map symbols
+
   const countyLabelLayer = {
     id: 'county-labels',
     type: 'symbol' as const,
@@ -317,35 +308,35 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
         'interpolate',
         ['linear'],
         ['zoom'],
-        4, isMobileView ? 12 : 10,    // Larger text on mobile
-        8, isMobileView ? 14 : 12,    // Larger text on mobile
-        12, isMobileView ? 16 : 14    // Larger text on mobile
+        4, isMobileView ? 12 : 10,  
+        8, isMobileView ? 14 : 12,  
+        12, isMobileView ? 16 : 14    
       ] as any,
       'text-anchor': 'center',
       'text-justify': 'center',
-      'text-allow-overlap': true,     // Always show labels even if they overlap
-      'text-ignore-placement': true,  // Ignore placement conflicts
+      'text-allow-overlap': true,    
+      'text-ignore-placement': true, 
       'symbol-placement': 'point',
-      'text-optional': false,         // Never hide the text
+      'text-optional': false,      
     } as any,
     paint: {
       'text-color': [
         'case',
         ['get', 'isSelected'],
-        '#FFFFFF', // White text for selected counties
-        '#374151'  // Gray text for unselected counties
+        '#FFFFFF', 
+        '#374151' 
       ] as any,
       'text-halo-color': [
         'case',
         ['get', 'isSelected'],
-        '#10B981', // Green halo for selected counties
-        '#FFFFFF'  // White halo for unselected counties
+        '#10B981',
+        '#FFFFFF'  
       ] as any,
-      'text-halo-width': isMobileView ? 3 : 2, // Thicker halo on mobile for better visibility
+      'text-halo-width': isMobileView ? 3 : 2,
       'text-halo-blur': 1,
-      'text-opacity': 1,  // Always fully visible
+      'text-opacity': 1, 
     } as any,
-    cursor: 'pointer', // Add pointer cursor for clickable labels
+    cursor: 'pointer', 
   };
 
   const countyCallsLayer = {
@@ -362,54 +353,54 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
         'interpolate',
         ['linear'],
         ['zoom'],
-        4, isMobileView ? 10 : 8,     // Larger text on mobile
-        8, isMobileView ? 12 : 10,    // Larger text on mobile
-        12, isMobileView ? 14 : 12    // Larger text on mobile
+        4, isMobileView ? 10 : 8,    
+        8, isMobileView ? 12 : 10,    
+        12, isMobileView ? 14 : 12   
       ] as any,
       'text-anchor': 'center',
       'text-justify': 'center',
-      'text-offset': [0, 1.2],        // Slightly below the county name
-      'text-allow-overlap': true,     // Always show labels even if they overlap
-      'text-ignore-placement': true,  // Ignore placement conflicts
+      'text-offset': [0, 1.2],      
+      'text-allow-overlap': true,    
+      'text-ignore-placement': true, 
       'symbol-placement': 'point',
-      'text-optional': false,         // Never hide the text
+      'text-optional': false,        
     } as any,
     paint: {
       'text-color': [
         'case',
         ['get', 'isSelected'],
-        '#D1FAE5', // Light green text for selected counties
-        '#6B7280'  // Gray text for unselected counties
+        '#D1FAE5',
+        '#6B7280' 
       ] as any,
       'text-halo-color': [
         'case',
         ['get', 'isSelected'],
-        '#047857', // Dark green for selected counties
-        '#FFFFFF'  // White halo for unselected counties
+        '#047857',
+        '#FFFFFF' 
       ] as any,
-      'text-halo-width': isMobileView ? 3 : 2, // Thicker halo on mobile
+      'text-halo-width': isMobileView ? 3 : 2, 
       'text-halo-blur': 1,
-      'text-opacity': 1,  // Always fully visible
+      'text-opacity': 1, 
     } as any,
-    cursor: 'pointer', // Add pointer cursor for clickable labels
+    cursor: 'pointer', 
   };
 
-  // Mobile touch target layer - invisible circles for better touch interaction
+
   const countyTouchTargetLayer = {
     id: 'county-touch-targets',
     type: 'circle' as const,
     layout: {},
     paint: {
-      'circle-radius': isMobileView ? 30 : 15, // Even larger touch targets on mobile
-      'circle-color': 'rgba(255, 255, 255, 0)', // Completely transparent
-      'circle-opacity': 0, // Always invisible
-      'circle-stroke-color': 'transparent', // No stroke
-      'circle-stroke-width': 0, // No stroke width
-      'circle-stroke-opacity': 0, // No stroke opacity
+      'circle-radius': isMobileView ? 30 : 15, 
+      'circle-color': 'rgba(255, 255, 255, 0)',
+      'circle-opacity': 0, 
+      'circle-stroke-color': 'transparent', 
+      'circle-stroke-width': 0, 
+      'circle-stroke-opacity': 0, 
     },
   };
 
-  // DMA layer configurations
+
   const dmaBorderLayer = {
     id: 'dma-borders',
     type: 'line' as const,
@@ -417,30 +408,30 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
       'line-color': [
         'case',
         ['get', 'isSelected'],
-        '#10B981', // Green for selected DMA
+        '#10B981', 
         ['get', 'isHovered'],
-        '#6B7280', // Gray for hovered DMA
-        '#374151'  // Dark gray for default DMA borders (bold as required)
+        '#6B7280', 
+        '#374151'  
       ] as any,
       'line-width': [
         'interpolate',
         ['linear'],
         ['zoom'],
-        0, 3, // Bold default at all zoom levels
-        8, 4  // Slightly thicker at higher zoom
+        0, 3, 
+        8, 4  
       ] as any,
-      'line-opacity': 1, // Always fully visible
+      'line-opacity': 1, 
     },
   };
 
-  // DMA fill layer - transparent but clickable areas for entire DMA regions
+
   const dmaFillLayer = {
     id: 'dma-areas',
     type: 'fill' as const,
     layout: {},
     paint: {
-      'fill-color': 'rgba(0, 0, 0, 0)', // Completely transparent
-      'fill-opacity': 0, // Invisible but still clickable
+      'fill-color': 'rgba(0, 0, 0, 0)',  
+      'fill-opacity': 0, 
     },
   };
 
@@ -468,54 +459,53 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
       'text-color': [
         'case',
         ['get', 'isSelected'],
-        '#047857', // Dark green for selected DMA
+        '#047857',  
         ['get', 'isHovered'],
-        '#374151', // Dark gray for hovered DMA
-        '#FFFFFF'  // White for default (visibility on dark style)
+        '#374151',
+        '#FFFFFF'  
       ] as any,
       'text-halo-color': [
         'case',
         ['get', 'isSelected'],
-        '#FFFFFF', // White halo for selected
+        '#FFFFFF',
         ['get', 'isHovered'],
-        '#FFFFFF', // White halo for hovered
-        '#000000'  // Black halo for default
+        '#FFFFFF', 
+        '#000000'  
       ] as any,
       'text-halo-width': isMobileView ? 3 : 2,
       'text-halo-blur': 1,
     } as any,
   };
 
-  // Handle marker click
+
   const handleMarkerClick = useCallback((point: MapDataPoint) => {
     onZipCodeClick?.(point);
   }, [onZipCodeClick]);
 
-  // Handle marker leave
   const handleMarkerLeave = useCallback(() => {
     setTooltipData(null);
   }, []);
 
-  // DMA interaction handlers
+
   const handleDMAClick = useCallback((dmaId: string, dmaName: string) => {
     const dmaData = getProcessedDMAData();
     const clickedDMA = dmaData.find(dma => dma.id === dmaId);
     
     if (clickedDMA && mapRef.current) {
-      // Check if clicking the same DMA when already zoomed in
+  
       if (isZoomedToDMA && selectedDMA?.id === dmaId) {
-        // Do nothing - clicking same DMA when already zoomed in
+
         return;
       }
       
-      // Hide counties when switching DMAs (selections preserved)
+
       setShowCountiesInDMA(false);
       setSelectedCountiesInDMA([]);
-      // Note: NOT clearing county selections - they persist across DMA switches
+
       
-      // If switching from another DMA, first zoom out, then zoom into new DMA
+
       if (isZoomedToDMA && selectedDMA?.id !== dmaId) {
-        // First zoom out to show all data
+     
         const bounds = calculateMapBounds(validDataPoints);
         if (bounds) {
           mapRef.current.fitBounds(
@@ -530,7 +520,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           });
         }
         
-        // After zoom out, zoom into the new DMA
+      
         setTimeout(() => {
           setSelectedDMA(clickedDMA);
           setIsZoomedToDMA(true);
@@ -540,24 +530,19 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
             { 
               padding: isMobileView ? 20 : 40, 
               duration: 1200,
-              minZoom: 8, // Match the manual zoom threshold for county display
-              maxZoom: 8  // Set to exactly the same zoom level as manual detection
+              minZoom: 8,
+              maxZoom: 8 
             }
           );
-             // Show counties and pre-load their boundaries after zoom animation
-        setTimeout(() => {
+             setTimeout(() => {
           setShowCountiesInDMA(true);
           
-          // Only load boundaries for counties within this specific DMA
           const countiesInDMA = getCountiesInDMA(clickedDMA.id, countyData.map(c => ({
             countyName: c.countyName,
             stateName: c.stateName,
             coordinates: c.coordinates
           })));
           
-          console.log(`🚀 Starting lazy loading for ${countiesInDMA.length} counties in DMA: ${clickedDMA.name}`);
-          
-          // Use lazy loading with viewport awareness
           if (mapRef.current) {
             const bounds = mapRef.current.getBounds();
             if (bounds) {
@@ -571,17 +556,17 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
               };
               countySelection.lazyLoadCountyBoundaries(countiesInDMA, viewportInfo);
             } else {
-              // Fallback without viewport info
+              
               countySelection.lazyLoadCountyBoundaries(countiesInDMA);
             }
           } else {
-            // Fallback without viewport info
+          
             countySelection.lazyLoadCountyBoundaries(countiesInDMA);
           }
         }, 1300);
-        }, 900); // Start zoom in after zoom out completes
+        }, 900);
       } else {
-        // First time zoom into DMA
+      
         setSelectedDMA(clickedDMA);
         setIsZoomedToDMA(true);
         
@@ -590,25 +575,20 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           { 
             padding: isMobileView ? 20 : 40, 
             duration: 1500,
-            minZoom: 8, // Match the manual zoom threshold for county display
-            maxZoom: 8  // Set to exactly the same zoom level as manual detection
+            minZoom: 8, 
+            maxZoom: 8  
           }
         );
         
-        // Show counties and pre-load their boundaries after zoom animation
         setTimeout(() => {
           setShowCountiesInDMA(true);
           
-          // Only load boundaries for counties within this specific DMA
           const countiesInDMA = getCountiesInDMA(clickedDMA.id, countyData.map(c => ({
             countyName: c.countyName,
             stateName: c.stateName,
             coordinates: c.coordinates
           })));
           
-          console.log(`🚀 Starting lazy loading for ${countiesInDMA.length} counties in DMA: ${clickedDMA.name}`);
-          
-          // Use lazy loading with viewport awareness
           if (mapRef.current) {
             const bounds = mapRef.current.getBounds();
             if (bounds) {
@@ -622,11 +602,11 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
               };
               countySelection.lazyLoadCountyBoundaries(countiesInDMA, viewportInfo);
             } else {
-              // Fallback without viewport info
+           
               countySelection.lazyLoadCountyBoundaries(countiesInDMA);
             }
           } else {
-            // Fallback without viewport info
+      
             countySelection.lazyLoadCountyBoundaries(countiesInDMA);
           }
         }, 1600);
@@ -643,12 +623,12 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
       setSelectedDMA(null);
       setIsZoomedToDMA(false);
       
-      // Hide counties when resetting zoom (selections preserved)
+  
       setShowCountiesInDMA(false);
       setSelectedCountiesInDMA([]);
-      // Note: NOT clearing county selections - they persist when resetting zoom
+     
       
-      // Zoom back to full data extent
+
       const bounds = calculateMapBounds(validDataPoints);
       if (bounds) {
         mapRef.current.fitBounds(
@@ -656,7 +636,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           { padding: 60, duration: 1000 }
         );
       } else {
-        // Fallback to US center
+
         mapRef.current.flyTo({
           center: initialCenter,
           zoom: initialZoom,
@@ -666,7 +646,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     }
   }, [validDataPoints, initialCenter, initialZoom, countySelection]);
 
-  // County selection handlers - always available
+
   const handleCountySelect = useCallback(async (county: CountyData) => {
     await countySelection.selectCounty(county.countyName, county.stateName);
     onCountySelect?.([county]);
@@ -681,13 +661,10 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     onCountyHover?.(county);
   }, [countySelection, onCountyHover]);
 
-  // Handle manual zoom changes to show/hide counties based on zoom level and location
+
   const handleViewportChange = useCallback((newViewport: any) => {
     setViewport(newViewport);
     
-    console.log(`🔄 Viewport change: zoom=${newViewport.zoom.toFixed(2)}, center=[${newViewport.longitude.toFixed(4)}, ${newViewport.latitude.toFixed(4)}], isZoomedToDMA=${isZoomedToDMA}, showCountiesInDMA=${showCountiesInDMA}`);
-    
-    // Update viewport priority for any ongoing lazy loading
     if (mapRef.current) {
       const bounds = mapRef.current.getBounds();
       if (bounds) {
@@ -702,56 +679,45 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
       }
     }
     
-    // If currently zoomed into a DMA and user manually zooms out below threshold, hide counties but preserve selections
+
     if (isZoomedToDMA && showCountiesInDMA && newViewport.zoom < 6) {
-      console.log(`⬅️ Zoom out detected (${newViewport.zoom.toFixed(2)} < 6), hiding counties but preserving selections`);
       setShowCountiesInDMA(false);
       setSelectedCountiesInDMA([]);
-      // Note: NOT clearing county selections - they persist when zooming out
       setSelectedDMA(null);
       setIsZoomedToDMA(false);
-      // Cancel any ongoing lazy loading when zooming out
+     
       countySelection.cancelLazyLoading();
       return;
     }
     
-    // If not currently zoomed into a DMA and user zooms in above threshold, check if we're over a DMA
+
     if (!isZoomedToDMA && newViewport.zoom >= 8) {
-      console.log(`🔍 High zoom detected (${newViewport.zoom.toFixed(2)} >= 8), checking for DMA at center...`);
       const dmaData = getProcessedDMAData();
       
-      // Find DMA that contains the current map center
+     
       const mapCenter: [number, number] = [newViewport.longitude, newViewport.latitude];
       
       for (const dma of dmaData) {
-        // Quick bounds check first
+
         const { bounds } = dma;
         if (mapCenter[0] >= bounds.southwest[0] && mapCenter[0] <= bounds.northeast[0] &&
             mapCenter[1] >= bounds.southwest[1] && mapCenter[1] <= bounds.northeast[1]) {
           
-          console.log(`📍 Center is within bounds of DMA: ${dma.name}, doing precise geometry check...`);
-          
-          // More precise check: is the center point within the DMA geometry
           const isInsideDMA = pointInFeature(mapCenter, dma.feature);
           
           if (isInsideDMA) {
-            console.log(`✅ Manual zoom detected DMA: ${dma.name} at zoom ${newViewport.zoom.toFixed(2)}`);
             
-            // Set the DMA as selected and show counties
             setSelectedDMA(dma);
             setIsZoomedToDMA(true);
             setShowCountiesInDMA(true);
             
-            // Get counties in this DMA for lazy loading
+           
             const countiesInDMA = getCountiesInDMA(dma.id, countyData.map(c => ({
               countyName: c.countyName,
               stateName: c.stateName,
               coordinates: c.coordinates
             })));
             
-            console.log(`🚀 Starting lazy loading for ${countiesInDMA.length} counties in DMA: ${dma.name}`);
-            
-            // Use lazy loading with viewport awareness
             if (mapRef.current) {
               const bounds = mapRef.current.getBounds();
               if (bounds) {
@@ -764,68 +730,61 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
                 };
                 countySelection.lazyLoadCountyBoundaries(countiesInDMA, viewportInfo);
               } else {
-                // Fallback without viewport info
+              
                 countySelection.lazyLoadCountyBoundaries(countiesInDMA);
               }
             } else {
-              // Fallback without viewport info
+            
               countySelection.lazyLoadCountyBoundaries(countiesInDMA);
             }
             
-            break; // Found the DMA, no need to check others
+            break;
           } else {
-            console.log(`❌ Center is outside DMA geometry for: ${dma.name}`);
           }
         }
       }
     }
     
-    // ENHANCED: Also check for DMA changes when already zoomed in (panning between DMAs)
+
     if (isZoomedToDMA && newViewport.zoom >= 8) {
-      console.log(`🔄 Already zoomed in (${newViewport.zoom.toFixed(2)} >= 8), checking for DMA change at center...`);
       const dmaData = getProcessedDMAData();
       
-      // Find DMA that contains the current map center
+ 
       const mapCenter: [number, number] = [newViewport.longitude, newViewport.latitude];
       let foundNewDMA = null;
       
       for (const dma of dmaData) {
-        // Quick bounds check first
+     
         const { bounds } = dma;
         if (mapCenter[0] >= bounds.southwest[0] && mapCenter[0] <= bounds.northeast[0] &&
             mapCenter[1] >= bounds.southwest[1] && mapCenter[1] <= bounds.northeast[1]) {
           
-          // More precise check: is the center point within the DMA geometry
+        
           const isInsideDMA = pointInFeature(mapCenter, dma.feature);
           
           if (isInsideDMA) {
             foundNewDMA = dma;
-            break; // Found the DMA, no need to check others
+            break;
           }
         }
       }
       
-      // Check if we've moved to a different DMA or moved outside any DMA
+
       if (foundNewDMA && foundNewDMA.id !== selectedDMA?.id) {
-        console.log(`🔄 Panned into different DMA: ${foundNewDMA.name} (was: ${selectedDMA?.name || 'none'})`);
         
-        // Cancel any ongoing loading for the previous DMA
         countySelection.cancelLazyLoading();
         
-        // Update to the new DMA
+   
         setSelectedDMA(foundNewDMA);
         setShowCountiesInDMA(true);
         
-        // Get counties in this new DMA for lazy loading
+
         const countiesInDMA = getCountiesInDMA(foundNewDMA.id, countyData.map(c => ({
           countyName: c.countyName,
           stateName: c.stateName,
           coordinates: c.coordinates
         })));
         
-        console.log(`🚀 Starting lazy loading for ${countiesInDMA.length} counties in new DMA: ${foundNewDMA.name}`);
-        
-        // Use lazy loading with viewport awareness
         if (mapRef.current) {
           const bounds = mapRef.current.getBounds();
           if (bounds) {
@@ -838,40 +797,34 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
             };
             countySelection.lazyLoadCountyBoundaries(countiesInDMA, viewportInfo);
           } else {
-            // Fallback without viewport info
+     
             countySelection.lazyLoadCountyBoundaries(countiesInDMA);
           }
         } else {
-          // Fallback without viewport info
+
           countySelection.lazyLoadCountyBoundaries(countiesInDMA);
         }
       } else if (!foundNewDMA && selectedDMA) {
-        console.log(`🚫 Panned outside of any DMA (was in: ${selectedDMA.name}), hiding counties`);
         
-        // Cancel any ongoing loading
         countySelection.cancelLazyLoading();
         
-        // Hide counties but keep zoom state (since user is still at high zoom)
+       
         setShowCountiesInDMA(false);
         setSelectedCountiesInDMA([]);
         setSelectedDMA(null);
-        // Note: Keep isZoomedToDMA true since we're still at high zoom, just not in a DMA
       } else if (foundNewDMA && foundNewDMA.id === selectedDMA?.id) {
-        // Still in the same DMA, just update viewport priority for ongoing loading
-        console.log(`📍 Still in same DMA: ${foundNewDMA.name}, updating viewport priorities`);
       }
     }
   }, [isZoomedToDMA, showCountiesInDMA, countySelection, countyData, getProcessedDMAData, getCountiesInDMA, selectedDMA]);
 
-  // Get selected counties for stats panel
+
   const selectedCounties = countyData.filter(county => countySelection.isCountySelected(county.countyName));
 
-  // Create county boundary GeoJSON data for all counties in DMA (visible when zoomed in)
   const allCountyBoundariesInDMA = useMemo(() => {
-    // Show all county boundaries when zoomed into DMA
+
     if (!isZoomedToDMA || !showCountiesInDMA || !selectedDMA) return null;
 
-    // Get only counties within the selected DMA
+
     const countiesInDMA = getCountiesInDMA(selectedDMA.id, countyData.map(c => ({
       countyName: c.countyName,
       stateName: c.stateName,
@@ -881,7 +834,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     const features: GeoJSON.Feature[] = [];
     
     countiesInDMA.forEach(dmaCounty => {
-      // Find the full county data
+
       const county = countyData.find(c => 
         c.countyName === dmaCounty.countyName && c.stateName === dmaCounty.stateName
       );
@@ -892,7 +845,6 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           const isSelected = countySelection.isCountySelected(county.countyName);
           const boundaryGeoJSON = countyBoundaryToGeoJSON(boundary);
           
-          // Add selection state to properties
           features.push({
             ...boundaryGeoJSON,
             properties: {
@@ -913,7 +865,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     } : null;
   }, [isZoomedToDMA, showCountiesInDMA, selectedDMA, countyData, countySelection]);
 
-  // Create county boundary GeoJSON data for selected counties only (for filled appearance)
+
   const selectedCountyBoundaries = useMemo(() => {
     const features: GeoJSON.Feature[] = [];
     
@@ -921,14 +873,14 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
       const boundary = countySelection.getCountyBoundary(county.countyName, county.stateName);
       if (boundary) {
         const boundaryGeoJSON = countyBoundaryToGeoJSON(boundary);
-        // Add county information to properties for click handling
+
         features.push({
           ...boundaryGeoJSON,
           properties: {
             ...boundaryGeoJSON.properties,
             countyName: county.countyName,
             stateName: county.stateName,
-            isSelected: true, // This layer only contains selected counties
+            isSelected: true,
             totalCalls: county.aggregatedStats.totalCallsConnected
           }
         });
@@ -941,23 +893,19 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     } : null;
   }, [selectedCounties, countySelection]);
 
-  // Handle stats panel visibility based on selected counties
+
   useEffect(() => {
     const hasSelectedCounties = selectedCounties.length > 0;
     if (hasSelectedCounties && !showCountyStatsPanel) {
-      console.log(`📊 Opening stats panel: ${selectedCounties.length} counties selected`);
       setShowCountyStatsPanel(true);
     }
-    // Note: We don't auto-close the panel when no counties are selected
-    // The user can manually close it, and it should stay open for their convenience
   }, [selectedCounties.length, showCountyStatsPanel]);
 
-  // Create county shapes data for counties within selected DMA - always show when zoomed into DMA
+
   const countyShapesData = useMemo(() => {
-    // Show counties when we're zoomed into a DMA (county selection always available)
+
     if (!isZoomedToDMA || !showCountiesInDMA || !selectedDMA) return null;
 
-    // Get only counties within the selected DMA
     const countiesInDMA = getCountiesInDMA(selectedDMA.id, countyData.map(c => ({
       countyName: c.countyName,
       stateName: c.stateName,
@@ -967,7 +915,6 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     const features: GeoJSON.Feature[] = [];
     
     countiesInDMA.forEach(dmaCounty => {
-      // Find the full county data
       const county = countyData.find(c => 
         c.countyName === dmaCounty.countyName && c.stateName === dmaCounty.stateName
       );
@@ -977,7 +924,6 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
         const isHovered = countySelection.selectionState.hoveredCounty === county.countyName;
         const isLoading = countySelection.isBoundaryLoading(county.countyName, county.stateName);
         
-        // Add a point feature for each county's center point for labeling
         features.push({
           type: 'Feature',
           geometry: {
@@ -994,7 +940,6 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
             isLoading,
             countyId: `${county.countyName}-${county.stateName}`,
             isMobile: isMobileView,
-            // Add flag to indicate county is selected
             showName: isSelected
           }
         });
@@ -1007,21 +952,18 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     } : null;
   }, [isZoomedToDMA, showCountiesInDMA, selectedDMA, countyData, countySelection, isMobileView]);
 
-  // Handle map click for DMA selection, county selection and tooltip dismissal
   const handleMapClick = useCallback(async (event: any) => {
-    // On mobile, prevent selection if we detected dragging
+
     if (isMobileView && isDragging) {
       return;
     }
     
-    // Clear tooltip on click
+
     setTooltipData(null);
     
-    // Check if we have features to process
+
     if (event.features && event.features.length > 0) {
-      console.log(`🖱️ Map click with ${event.features.length} features:`, event.features.map((f: any) => ({ layerId: f.layer?.id, properties: f.properties })));
       
-      // First check for county clicks when zoomed into DMA - counties take priority over DMA areas
       if (isZoomedToDMA && showCountiesInDMA) {
         const countyFeature = event.features.find((f: any) => 
           f.layer && (
@@ -1039,32 +981,24 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           const countyName = countyFeature.properties.countyName;
           const stateName = countyFeature.properties.stateName;
           
-          console.log(`🏛️ County click detected: ${countyName}, ${stateName} (layer: ${countyFeature.layer.id})`);
-          
           const county = countyData.find(c => 
             c.countyName === countyName && c.stateName === stateName
           );
           
           if (county) {
-            // Check current selection state before toggling
             const wasSelected = countySelection.isCountySelected(county.countyName);
-            console.log(`🔄 About to toggle county selection: ${county.countyName} (currently selected: ${wasSelected})`);
             
-            // Toggle county selection using the built-in toggle logic
             await countySelection.selectCounty(county.countyName, county.stateName);
             
-            // Call the callback with the county
             onCountySelect?.([county]);
             
-            console.log(`✅ County selection toggle completed for: ${county.countyName}`);
-            return; // County click processed, don't check for DMA
+            return;
           } else {
-            console.warn(`⚠️ County data not found for: ${countyName}, ${stateName}`);
           }
         }
       }
       
-      // Only process DMA clicks if no county was clicked
+ 
       const dmaFeature = event.features.find((f: any) => 
         f.layer && (f.layer.id === 'dma-borders' || f.layer.id === 'dma-labels' || f.layer.id === 'dma-areas')
       );
@@ -1074,19 +1008,16 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
         const dmaName = dmaFeature.properties.dmaName;
         
         if (dmaId && dmaName) {
-          console.log(`🗺️ DMA click detected: ${dmaName} (layer: ${dmaFeature.layer.id})`);
           handleDMAClick(dmaId, dmaName);
           return;
         }
       }
       
-      console.log(`🔍 No matching feature found for click event`);
     } else {
-      console.log(`🚫 No features in click event: isZoomedToDMA=${isZoomedToDMA}, showCountiesInDMA=${showCountiesInDMA}`);
     }
   }, [countyData, handleCountySelect, countySelection, isMobileView, isDragging, selectedCounties.length, handleDMAClick, isZoomedToDMA, showCountiesInDMA]);
 
-  // Handle touch start for mobile drag detection
+
   const handleTouchStart = useCallback((event: any) => {
     if (isMobileView && event.touches && event.touches.length === 1) {
       const touch = event.touches[0];
@@ -1095,24 +1026,23 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     }
   }, [isMobileView]);
 
-  // Handle touch move for mobile drag detection
+
   const handleTouchMove = useCallback((event: any) => {
     if (isMobileView && touchStartPos && event.touches && event.touches.length === 1) {
       const touch = event.touches[0];
       const deltaX = Math.abs(touch.clientX - touchStartPos.x);
       const deltaY = Math.abs(touch.clientY - touchStartPos.y);
       
-      // If touch moved more than 15px, consider it a drag (increased threshold)
+
       if (deltaX > 15 || deltaY > 15) {
         setIsDragging(true);
       }
     }
   }, [isMobileView, touchStartPos]);
 
-  // Handle touch end for mobile
   const handleTouchEnd = useCallback((event: any) => {
     if (isMobileView) {
-      // Reset touch state after a small delay
+
       setTimeout(() => {
         setTouchStartPos(null);
         setIsDragging(false);
@@ -1120,23 +1050,23 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
     }
   }, [isMobileView]);
 
-  // Get marker size based on call volume (responsive sizing)
+
   const getMarkerSize = (totalCalls: number) => {
     const baseSizes = isMobileView 
-      ? { large: 40, medium: 32, small: 24 } // Larger on mobile for touch
-      : { large: 32, medium: 24, small: 16 }; // Original sizes on desktop
+      ? { large: 40, medium: 32, small: 24 } 
+      : { large: 32, medium: 24, small: 16 }; 
     
     if (totalCalls >= 100) return baseSizes.large;
     if (totalCalls >= 50) return baseSizes.medium;
     return baseSizes.small;
   };
 
-  // Get marker color based on bid range
+
   const getMarkerColor = (avgBid: number) => {
-    if (avgBid >= 100) return '#DC2626'; // red-600
-    if (avgBid >= 75) return '#EF4444';  // red-500
-    if (avgBid >= 50) return '#F59E0B';  // amber-500
-    return '#10B981'; // green-500
+    if (avgBid >= 100) return '#DC2626';
+    if (avgBid >= 75) return '#EF4444';  
+    if (avgBid >= 50) return '#F59E0B';  
+    return '#10B981';
   };
 
   if (loading || isLoading) {
@@ -1275,7 +1205,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
       <div 
         className="absolute rounded-lg overflow-hidden shadow-lg"
         style={{
-          top: showLegend ? '80px' : '0', // Adjusted height for new responsive header layout
+          top: showLegend ? '80px' : '0',  
           left: '0',
           right: '0',
           bottom: '0',
@@ -1288,14 +1218,14 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           mapboxAccessToken={mapboxAccessToken}
           style={{ width: '100%', height: '100%' }}
           mapStyle={mapStyle}
-          onClick={handleMapClick} // Handle clicks on both desktop and mobile
+          onClick={handleMapClick}
           onTouchStart={isMobileView ? handleTouchStart : undefined}
           onTouchMove={isMobileView ? handleTouchMove : undefined}
           onTouchEnd={isMobileView ? handleTouchEnd : undefined}
           onMouseMove={(event) => {
-            // Only handle mouse events on desktop
+   
             if (!isMobileView && event.features && event.features.length > 0) {
-              // Check for DMA hover first
+      
               const dmaFeature = event.features.find((f: any) => 
                 f.layer && (f.layer.id === 'dma-borders' || f.layer.id === 'dma-labels' || f.layer.id === 'dma-areas')
               );
@@ -1308,10 +1238,10 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
                     mapRef.current.getCanvas().style.cursor = 'pointer';
                   }
                 }
-                return; // Don't process county hover if DMA is hovered
+                return; 
               }
               
-              // Check for county hover if no DMA is hovered and counties are visible
+         
               if (isZoomedToDMA && showCountiesInDMA) {
                 const countyFeature = event.features.find((f: any) => 
                   f.layer && (
@@ -1330,19 +1260,19 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
                 }
               }
               
-              // Default cursor when not over interactive elements
+           
               if (mapRef.current) {
                 mapRef.current.getCanvas().style.cursor = '';
               }
             } else if (!isMobileView && mapRef.current) {
-              // No features under cursor, reset to default
+
               mapRef.current.getCanvas().style.cursor = '';
             }
           }}
           onMouseEnter={(event) => {
-            // Only handle mouse events on desktop
+
             if (!isMobileView && event.features && event.features.length > 0) {
-              // Check for DMA hover first
+
               const dmaFeature = event.features.find((f: any) => 
                 f.layer && (f.layer.id === 'dma-borders' || f.layer.id === 'dma-labels' || f.layer.id === 'dma-areas')
               );
@@ -1355,10 +1285,10 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
                     mapRef.current.getCanvas().style.cursor = 'pointer';
                   }
                 }
-                return; // Don't process county hover if DMA is hovered
+                return;
               }
               
-              // Check for county hover if no DMA is hovered and counties are visible
+
               if (isZoomedToDMA && showCountiesInDMA) {
                 const countyFeature = event.features.find((f: any) => 
                   f.layer && (
@@ -1377,16 +1307,16 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
                 }
               }
               
-              // Default cursor when not over interactive elements
+        
               if (mapRef.current) {
                 mapRef.current.getCanvas().style.cursor = '';
               }
             }
           }}
           onMouseLeave={() => {
-            // Only handle mouse events on desktop
+
             if (!isMobileView) {
-              handleDMAHover(null); // Clear DMA hover
+              handleDMAHover(null); 
               if (mapRef.current) {
                 mapRef.current.getCanvas().style.cursor = '';
               }
@@ -1394,11 +1324,11 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           }}
           interactiveLayerIds={[
             'dma-borders', 
-            'dma-areas',    // Clickable DMA fill areas
+            'dma-areas',   
             'dma-labels',
-            // County interaction layers - always available when counties are visible
+
             ...(isZoomedToDMA && showCountiesInDMA ? [
-              'county-clickable-areas',  // Main clickable layer for county areas
+              'county-clickable-areas',  
               'county-labels', 
               'county-calls', 
               'county-touch-targets', 
@@ -1441,9 +1371,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
           {/* County Labels Layer - Always show when zoomed into DMA */}
           {isZoomedToDMA && showCountiesInDMA && countyShapesData && (
             <Source id="county-labels-source" type="geojson" data={countyShapesData}>
-              {/* Touch targets first (bottom layer) */}
               {isMobileView && <Layer {...countyTouchTargetLayer} />}
-              {/* Labels on top */}
               <Layer {...countyLabelLayer} />
               <Layer {...countyCallsLayer} />
             </Source>
@@ -1471,11 +1399,11 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
                 onMouseEnter={(e) => {
                   if (!mapRef.current) return;
                   
-                  // Get the map container's bounding rect
+           
                   const mapContainer = mapRef.current.getContainer();
                   const rect = mapContainer.getBoundingClientRect();
                   
-                  // Calculate position relative to the map container
+             
                   const x = e.clientX - rect.left;
                   const y = e.clientY - rect.top;
                   
@@ -1485,14 +1413,13 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
                   });
                 }}
                 onTouchStart={(e) => {
-                  // Handle touch events for mobile
+         
                   if (!mapRef.current) return;
                   
                   const mapContainer = mapRef.current.getContainer();
                   const rect = mapContainer.getBoundingClientRect();
                   const touch = e.touches[0];
                   
-                  // Calculate position relative to the map container
                   const x = touch.clientX - rect.left;
                   const y = touch.clientY - rect.top;
                   
@@ -1501,7 +1428,7 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
                     position: { x, y },
                   });
                   
-                  // Note: Removed auto-hide timeout - tooltip stays open until manually closed
+            
                 }}
                 onMouseLeave={handleMarkerLeave}
               />
@@ -1540,27 +1467,25 @@ export const LeadsMap: React.FC<LeadsMapPropsWithCounties> = ({
         <div 
           className={cn(
             "absolute z-10",
-            // Always on the right on desktop, full width on mobile
+         
             "right-2 sm:right-4",
             "w-[calc(100vw-1rem)] sm:w-auto"
           )}
           style={{ 
             top: showFilters && showFilterPanel && isMobileView
-              ? '350px' // Stack below filter panel on mobile only
+              ? '350px' 
               : showLegend ? '96px' : '16px'
           }}
         >
           <CountyStatsPanel
             selectedCounties={selectedCounties}
             onClose={() => {
-              // Only hide the panel, don't clear counties
               setShowCountyStatsPanel(false);
             }}
             onCountyDeselect={(countyName) => {
               countySelection.deselectCounty(countyName);
             }}
             onClearAll={() => {
-              // Clear all counties and hide panel
               countySelection.clearSelection();
               setShowCountyStatsPanel(false);
             }}

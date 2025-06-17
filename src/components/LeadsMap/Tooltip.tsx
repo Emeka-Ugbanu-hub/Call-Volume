@@ -14,7 +14,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ data, className, onClose }) =>
   const [dimensions, setDimensions] = useState({ width: 1024, height: 768 });
 
   useEffect(() => {
-    // Update dimensions on mount and resize
+
     const updateDimensions = () => {
       setDimensions({
         width: window.innerWidth,
@@ -31,17 +31,17 @@ export const Tooltip: React.FC<TooltipProps> = ({ data, className, onClose }) =>
     ? ((data.totalConversions / data.totalRequests) * 100).toFixed(1)
     : '0.0';
 
-  // Responsive tooltip dimensions
-  const isMobile = dimensions.width < 640; // sm breakpoint
-  const isTablet = dimensions.width < 1024; // lg breakpoint
+
+  const isMobile = dimensions.width < 640; 
+  const isTablet = dimensions.width < 1024; 
   
-  // Calculate dynamic width based on content - fit content on mobile
+ 
   let tooltipWidth;
   if (isMobile) {
-    // On mobile, use auto width with constraints
+   
     tooltipWidth = 'auto';
   } else {
-    // On tablet/desktop, use calculated widths
+
     const baseWidth = isTablet ? 240 : 260;
     const maxWidth = isTablet ? 280 : 300;
     const minWidth = 220;
@@ -51,16 +51,16 @@ export const Tooltip: React.FC<TooltipProps> = ({ data, className, onClose }) =>
   const tooltipHeight = isMobile ? 180 : 200;
   const padding = isMobile ? 10 : 15;
   
-  // Calculate position
+
   let left = data.position.x;
   let top = data.position.y - tooltipHeight - padding;
   
-  // For mobile with auto width, we need to handle positioning differently
+  
   if (isMobile && tooltipWidth === 'auto') {
-    // Center the tooltip horizontally on mobile, but keep it on screen
+   
     left = Math.max(padding, Math.min(data.position.x - 120, dimensions.width - 240 - padding));
   } else {
-    // Adjust horizontal position if tooltip would go off-screen (non-mobile)
+ 
     const width = typeof tooltipWidth === 'number' ? tooltipWidth : 240;
     if (left + width > dimensions.width) {
       left = dimensions.width - width - padding;
@@ -70,36 +70,36 @@ export const Tooltip: React.FC<TooltipProps> = ({ data, className, onClose }) =>
     }
   }
   
-  // Adjust vertical position if tooltip would go off-screen
+
   if (top < padding) {
-    top = data.position.y + padding; // Show below the point instead
+    top = data.position.y + padding; 
   }
   
-  // Determine arrow position based on where tooltip is positioned
+ 
   const arrowLeft = isMobile && tooltipWidth === 'auto' 
-    ? 120 // Fixed position for auto-width mobile tooltips
+    ? 120 
     : Math.max(10, Math.min((typeof tooltipWidth === 'number' ? tooltipWidth : 240) - 10, data.position.x - left));
-  const showArrowBottom = top > data.position.y; // Arrow points down if tooltip is above point
+  const showArrowBottom = top > data.position.y; 
 
   return (
     <div
       className={cn(
         "absolute z-50 bg-gray-900 text-white rounded-lg shadow-2xl pointer-events-none",
         "animate-tooltip-fade",
-        // Responsive padding and text sizes - tighter for content fitting
+
         "p-2 sm:p-3 text-xs sm:text-sm",
-        // Enable pointer events on mobile for close button
+
         "sm:pointer-events-none pointer-events-auto",
-        // Make content more compact
+
         "leading-tight",
-        // Mobile-specific width handling
+
         isMobile ? "max-w-[calc(100vw-20px)] min-w-[200px] w-max" : "",
         className
       )}
       style={{
         left: left,
         top: top,
-        transform: 'none', // Remove transform to use absolute positioning
+        transform: 'none',
         ...(typeof tooltipWidth === 'number' ? { width: tooltipWidth } : {}),
       }}
     >

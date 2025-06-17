@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mapbox GL CSS */
+
 @import 'mapbox-gl/dist/mapbox-gl.css';
 
-/* Custom map styles */
+
 @layer components {
   .map-container {
     @apply relative w-full h-full bg-gray-50 rounded-lg overflow-hidden;
@@ -13,7 +13,7 @@
 
   .map-marker {
     @apply absolute bg-green-500 rounded-full border-2 border-white shadow-lg cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 hover:shadow-xl;
-    /* Responsive marker sizes - larger on mobile for better touch targets */
+  
     @apply w-8 h-8 sm:w-6 sm:h-6;
   }
 

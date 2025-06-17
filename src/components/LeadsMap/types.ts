@@ -1,4 +1,3 @@
-// TypeScript definitions for the LeadsMap component
 export interface MapDataPoint {
   zipCode: string;
   totalRequests: number;
@@ -14,27 +13,27 @@ export interface MapDataPoint {
 export type MapDataResponse = MapDataPoint[];
 
 export interface LeadsMapProps {
-  // Required Props
+
   industryId: number;
   
-  // Optional Configuration
+
   timeframe?: '7_days' | '30_days';
   zipCodes?: string[];
   className?: string;
   
-  // Map Configuration
+
   mapboxAccessToken: string;
   initialZoom?: number;
   initialCenter?: [longitude: number, latitude: number];
   mapStyle?: string;
   
-  // UI Configuration
+
   showFilters?: boolean;
   showLegend?: boolean;
   enableClustering?: boolean;
   heatmapIntensity?: number;
   
-  // Event Handlers
+
   onZipCodeClick?: (data: MapDataPoint) => void;
   onDataLoad?: (data: MapDataPoint[]) => void;
   onError?: (error: Error) => void;
@@ -50,7 +49,7 @@ export interface MapTooltipData extends MapDataPoint {
   position: { x: number; y: number };
 }
 
-// Industry/Campaign types
+
 export interface Industry {
   campaign_id: number;
   campaign_name: string;
@@ -58,12 +57,12 @@ export interface Industry {
 
 export type IndustriesResponse = Industry[];
 
-// County selection types
+
 export interface CountyData {
   countyName: string;
   stateName: string;
   zipCodes: string[];
-  coordinates: [number, number]; // County center
+  coordinates: [number, number]; 
   bounds: {
     southwest: [number, number];
     northeast: [number, number];
@@ -80,12 +79,12 @@ export interface CountyData {
 }
 
 export interface CountySelectionState {
-  selectedCounties: string[]; // County names
+  selectedCounties: string[]; 
   hoveredCounty: string | null;
   showCountyStats: boolean;
 }
 
-// Extended props for county selection
+
 export interface LeadsMapPropsWithCounties extends LeadsMapProps {
   onCountySelect?: (counties: CountyData[]) => void;
   onCountyHover?: (county: CountyData | null) => void;
@@ -115,11 +114,11 @@ export interface MapError {
   details?: any;
 }
 
-// County boundary types for Nominatim integration
+
 export interface CountyBoundaryData {
   name: string;
   state: string;
-  center: [number, number]; // [longitude, latitude]
+  center: [number, number]; 
   bounds: {
     southwest: [number, number];
     northeast: [number, number];
@@ -133,13 +132,13 @@ export interface CountyBoundaryData {
 export interface CountyLabel {
   name: string;
   state: string;
-  position: [number, number]; // [longitude, latitude]
+  position: [number, number];
   totalCalls: number;
   isSelected: boolean;
   boundary?: CountyBoundaryData;
 }
 
-// Extended county selection state to include boundaries
+
 export interface CountySelectionStateWithBoundaries extends CountySelectionState {
   selectedCountyBoundaries: Map<string, CountyBoundaryData>;
   loadingBoundaries: Set<string>;

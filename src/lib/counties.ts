@@ -1,6 +1,6 @@
-import { CountyData, MapDataPoint } from '@/components/LeadsMap/types';
+import { CountyData } from '@/components/LeadsMap/types';
 
-// Utility functions for county operations
+
 export function formatCountyName(countyName: string, stateName: string): string {
   return `${countyName}, ${stateName}`;
 }
@@ -146,12 +146,12 @@ export function aggregateMultipleCounties(counties: CountyData[]): {
   };
 }
 
-// Helper function to create a county key for maps/sets
+
 export function createCountyKey(countyName: string, stateName: string): string {
   return `${countyName}|${stateName}`;
 }
 
-// Helper function to parse a county key
+
 export function parseCountyKey(key: string): { countyName: string; stateName: string } | null {
   const parts = key.split('|');
   if (parts.length !== 2) return null;

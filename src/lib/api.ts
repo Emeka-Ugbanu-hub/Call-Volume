@@ -1,8 +1,10 @@
 import { MapDataResponse, MapFilters, IndustriesResponse } from '@/components/LeadsMap/types';
 
-
-const API_BASE_URL = '/api'; 
-const API_VERSION = ''; 
+// Direct API configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.leads-magician.com/api';
+const API_VERSION = 'v1';
+const INDUSTRIES_API_KEY = process.env.NEXT_PUBLIC_INDUSTRIES_API_KEY || 'VoarWqi3dh6tslo9ClU5WNjT4lAHJIAL';
+const MAP_DATA_API_KEY = process.env.NEXT_PUBLIC_MAP_DATA_API_KEY || 'suNDIseaDvENTerIPeRICariCaNAbAlm'; 
 
 class ApiError extends Error {
   constructor(
@@ -16,9 +18,9 @@ class ApiError extends Error {
 }
 
 export async function fetchMapData(filters: MapFilters): Promise<MapDataResponse> {
-  const url = new URL(`${API_BASE_URL}/map-data`, window.location.origin);
+  const url = new URL(`${API_BASE_URL}/${API_VERSION}/map-data`);
   
-
+  // Add query parameters
   url.searchParams.set('industryId', filters.industryId.toString());
   url.searchParams.set('timeframe', filters.timeframe);
   
@@ -27,11 +29,10 @@ export async function fetchMapData(filters: MapFilters): Promise<MapDataResponse
   }
 
   try {
-    
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${MAP_DATA_API_KEY}`,
       },
     });
 
@@ -58,7 +59,7 @@ export async function fetchMapData(filters: MapFilters): Promise<MapDataResponse
     }
     
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new ApiError('Network error: Unable to connect to API');
+      throw new ApiError('Network/CORS error: Unable to connect to external API. Please check if CORS is enabled on the API server.');
     }
     
     throw new ApiError('Unknown error occurred while fetching data', undefined, error);
@@ -123,13 +124,13 @@ export async function fetchMapDataWithCache(filters: MapFilters): Promise<MapDat
 }
 
 export async function fetchIndustries(): Promise<IndustriesResponse> {
-  const url = new URL(`${API_BASE_URL}/industries`, window.location.origin);
+  const url = new URL(`${API_BASE_URL}/${API_VERSION}/industries`);
 
   try {
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${INDUSTRIES_API_KEY}`,
       },
     });
 
@@ -156,7 +157,7 @@ export async function fetchIndustries(): Promise<IndustriesResponse> {
     }
     
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new ApiError('Network error: Unable to connect to Industries API');
+      throw new ApiError('Network/CORS error: Unable to connect to external Industries API. Please check if CORS is enabled on the API server.');
     }
     
     throw new ApiError('Unknown error occurred while fetching industries', undefined, error);
